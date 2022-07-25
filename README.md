@@ -1,1 +1,1 @@
-# pygithub_script
+Please see README.txt in zip file.
