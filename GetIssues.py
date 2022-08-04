@@ -8,7 +8,7 @@ import pdb
 
 def main():
 
-    g = Github(login_or_token='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') # Will need to use own access token. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+    g = Github(login_or_token='YOUR_AUTH_TOKEN_HERE') # Will need to use own access token. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
     checkFolders()
     repoNames = getAllRepoNames()
 
