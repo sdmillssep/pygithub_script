@@ -1,0 +1,4 @@
+Format: <owner/RepoName>\t<query>
+Lines prefixed with '%%%' will be skipped by the script
+#############################################
+%%%exampleOwner/exampleRepoName	insert query here
