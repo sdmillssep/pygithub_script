@@ -8,12 +8,14 @@ import pdb
 
 def main():
 
-    g = Github(login_or_token='YOUR_AUTH_TOKEN_HERE') # Will need to use own access token. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+    g = Github(login_or_token='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') # Will need to use own access token. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
     checkFolders()
     repoNames = getAllRepoNames()
 
     # Iternate each repo in 'repo_names.txt'
     for i in range(3, len(repoNames)):
+        lastViewedIssue = loadSavedProgress()
+        
         line = repoNames[i]
         # check for ignored lines
         if line[:3] == '%%%':
@@ -23,9 +25,9 @@ def main():
         
         # Query for issues
         issues = g.search_issues('repo:{0} {1}'.format(lineData['repo_name'], lineData['query']), sort = 'created', order = 'asc')
-                        
+        pdb.set_trace()
         # Iternate issues + give Assessment Summary
-        startSession(lineData['repo_name'], issues)
+        startSession(lineData['repo_name'], issues, lastViewedIssue)
         
         # Only called if a query session has finished
         # Rewrite repo_names.txt to reflect current progress
@@ -34,6 +36,7 @@ def main():
         updateRepoNames(repoNames)
         
         # Next/exit logic
+        saveCurrentProgress("")
         nextQuery = input('Finished issues returned from \'{0}\'...\nMove to next query? (y = yes, any other key = no)\n'.format(lineData['query']))
         exportToExcel(lineData['repo_name'])
         
@@ -63,15 +66,12 @@ def listIssueData(curRepo, issue, issuesRemaining):
     print('{4}\nIssue #{0}: {1}\nBODY:\n{2}\nEND BODY\nCreated at: {3}\n{4}\n'.format(issue.number, issue.title, issue.body, issue.created_at, '##############' * 3))
     
     
-def startSession(repoName, issues):
+def startSession(repoName, issues, lastViewedIssue):
     if issues.totalCount == 0:
         print ('Query returned 0 issues...')
              
     else:
         # Start a 'review session' of remaining filtered issues
-        # Read last line of results.txt file + find that issue # in issues list + start at index immediately after that issue (if not out-of-bounds)
-        lastViewedIssue = getLastViewedIssue(repoName, issues)
-
         for i in range(int(lastViewedIssue) + 1, issues.totalCount):
             remainingIssues = issues.totalCount - i
             listIssueData(repoName, issues[i], remainingIssues)
@@ -95,6 +95,7 @@ def startSession(repoName, issues):
             else:
                 continueAssessment = input('Continue to next issue? (n = save & quit, any other key = continue)\n')
                 if continueAssessment.lower() == 'n':
+                    saveCurrentProgress(i)
                     print ('Progress saved...')
                     exit()
                                 
@@ -138,25 +139,25 @@ def checkFolders():
     excelExists = os.path.exists(excelPath)
     if not excelExists:
         os.makedirs(excelPath)
+        
+        
+def saveCurrentProgress(lastViewedIssue):
+    print('Saving progress...')
+    with open('.\\script_data\\saved_progress.txt', 'w', encoding = 'utf-8') as saveFile:
+        saveFile.write(str(lastViewedIssue))
+        
+def loadSavedProgress():
+    try:
+        with open('.\\script_data\\saved_progress.txt', 'r', encoding = 'utf-8') as saveFile:
+            lastViewedIssue = saveFile.readline()
+            lastViewedIssue = lastViewedIssue.rstrip()
+            if lastViewedIssue == "":
+                return -1
+            else:
+                return lastViewedIssue
 
-
-def getLastViewedIssue(repoName, issues):
-    repoName = repoName.replace('/', '-')
-    resultsFilePath = '.\\script_data\\results\\assessment_results_{}.txt'.format(repoName)
-    
-    if os.path.exists(resultsFilePath):
-        # This isn't the most efficient way to get the last line, but it doesn't store the whole file in memory (e.g. f.readlines() method) just to get a single line (with small enough files this won't really matter regardless)
-        with open(resultsFilePath) as f:
-            for line in f:
-                pass
-            lastLineIssueNum = line.split('\t')[0]
-
-            # Get index of matching issue number in issues list
-            for i in range(issues.totalCount):
-                if issues[i].number == int(lastLineIssueNum):
-                    return i
-    else:
-        return -1
+    except FileNotFoundError:
+        return -1 # file doesn't exist
         
 # WIP -- [TODO] tag       
 # def writeIssueToTodoFile(issue):

@@ -2,3 +2,5 @@ Format: <owner/RepoName>\t<query>
 Lines prefixed with '%%%' will be skipped by the script
 #############################################
 %%%exampleOwner/exampleRepoName	insert query here
+%%%dotnet/runtime	is:issue is:open Aes in:title,body
+%%%dotnet/runtime	is:issue is:open CryptoStreamMode in:title,body
