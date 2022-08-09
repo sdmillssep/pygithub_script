@@ -25,7 +25,6 @@ def main():
         
         # Query for issues
         issues = g.search_issues('repo:{0} {1}'.format(lineData['repo_name'], lineData['query']), sort = 'created', order = 'asc')
-        pdb.set_trace()
         # Iternate issues + give Assessment Summary
         startSession(lineData['repo_name'], issues, lastViewedIssue)
         
@@ -72,8 +71,16 @@ def startSession(repoName, issues, lastViewedIssue):
              
     else:
         # Start a 'review session' of remaining filtered issues
+        # Get already viewed issues
+        alreadyViewedIssues = getViewedIssues(repoName)
+        
         for i in range(int(lastViewedIssue) + 1, issues.totalCount):
             remainingIssues = issues.totalCount - i
+            
+            # Check if already assessed current issue
+            if int(issues[i].number) in alreadyViewedIssues:
+                continue
+                
             listIssueData(repoName, issues[i], remainingIssues)
             
             # Open issue in browser?
@@ -159,6 +166,21 @@ def loadSavedProgress():
     except FileNotFoundError:
         return -1 # file doesn't exist
         
+def getViewedIssues(repoName):
+    viewedIssues = []
+    repoName = repoName.replace('/', '-')
+    fileName = 'assessment_results_{0}.txt'.format(repoName)
+    try:
+        with open('.\\script_data\\results\\{}'.format(fileName), 'r', encoding = 'utf-8') as assessmentFile:
+            for line in assessmentFile:
+                issueNumber = int(line.rstrip().split('\t')[0])
+                viewedIssues.append(issueNumber)
+                
+    except FileNotFoundError:
+        pass
+        
+    return viewedIssues
+        
 # WIP -- [TODO] tag       
 # def writeIssueToTodoFile(issue):
     # with open('.\\script_data\\todo.txt', 'a', encoding = 'utf-8') as todoFile:
@@ -242,9 +264,9 @@ if __name__ == '__main__':
 
 
 # TODOS:
+# Automatically skip duplicate issue logic.
+# Try only showing issue #, title, created date, and labels? Still keep option to open to browser.
 # Move assessment logic to own function
-# Prevent crash when enter wrong item in tag selection (this is an issue with assuming they enter an int) (DONE)
-# Rather than saved_progress, make app resume at index immediately after latest result.txt line (DONE)
+# Rather than saved_progress, make app resume at index immediately after latest result.txt line (WIP)
 # Add issue-already-viewed skipping logic (add <TODO> tag which saves all TODO items to a separate file?)
-# Add create directory if not exist logic (DONE)
 
